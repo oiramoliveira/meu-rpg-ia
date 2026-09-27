@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jornada Infinita: RPG IA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 600px;
+            width: 100%;
+            background: #202024;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        h1 { text-align: center; color: #4ade80; }
+        #story-text { font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px; }
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        button {
+            background-color: #29292e;
+            color: #fff;
+            border: 2px solid #4ade80;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        button:hover { background-color: #4ade80; color: #121214; }
+        #start-btn { width: 100%; text-align: center; font-weight: bold; background-color: #4ade80; color: #121214; }
+        .loading { text-align: center; color: #8d8d99; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Jornada Infinita</h1>
+    <div id="game-content">
+        <p id="story-text">Bem-vindo à sua própria aventura gerada por IA. Suas escolhas definem seu destino... ou sua morte rápida.</p>
+        <div class="options-container" id="options-box">
+            <button id="start-btn" onclick="startGame()">Iniciar História</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
