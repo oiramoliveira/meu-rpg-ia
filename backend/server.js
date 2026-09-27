@@ -6,6 +6,7 @@ import 'dotenv/config';
 const app = express();
 const allowedOrigins = new Set(
     [
+        'https://meu-rpg-ia.vercel.app',
         'https://meu-rpg-ktegs8evg-oiramlopes.vercel.app',
         ...(process.env.FRONTEND_ORIGINS ?? 'http://localhost:5500,http://127.0.0.1:5500')
             .split(',')
