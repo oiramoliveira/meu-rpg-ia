@@ -74,6 +74,11 @@ Você DEVE responder estritamente em formato JSON com a seguinte estrutura:
   "options": ["Opção 1", "Opção 2", "Opção 3", "Opção 4"]
 }`;
 
+// Rota raiz para testar se o servidor está funcionando no navegador
+app.get('/', (req, res) => {
+    res.send('⚔️ O servidor do RPG de IA está online e pronto para a aventura!');
+});
+
 app.post('/api/chat', async (req, res) => {
     try {
         const { history } = req.body ?? {};
