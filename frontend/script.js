@@ -1,12 +1,21 @@
 // Quando você publicar no Render, mudará esta URL para o link que o Render te der
-const BACKEND_URL = "http://localhost:3000/api/chat"; 
+const BACKEND_URL = "https://onrender.com";
+const MAX_HISTORY_ENTRIES = 20;
 
 let storyHistory = [];
 
+function trimStoryHistory() {
+    if (storyHistory.length > MAX_HISTORY_ENTRIES) {
+        storyHistory = storyHistory.slice(-MAX_HISTORY_ENTRIES);
+        if (storyHistory[0]?.role === "model") storyHistory.shift();
+    }
+}
+
 async function fetchFromBackend(prompt) {
     showLoading();
-    
+
     storyHistory.push({ role: "user", parts: [{ text: prompt }] });
+    trimStoryHistory();
 
     try {
         const response = await fetch(BACKEND_URL, {
@@ -15,14 +24,17 @@ async function fetchFromBackend(prompt) {
             body: JSON.stringify({ history: storyHistory })
         });
 
+        if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
+
         const gameData = await response.json();
-        
+
         // Adiciona a resposta estruturada ao histórico para manter o contexto na IA
-        storyHistory.push({ 
-            role: "model", 
-            parts: [{ text: JSON.stringify(gameData) }] 
+        storyHistory.push({
+            role: "model",
+            parts: [{ text: JSON.stringify(gameData) }]
         });
-        
+        trimStoryHistory();
+
         renderGame(gameData);
 
     } catch (error) {
@@ -43,7 +55,7 @@ function makeChoice(choiceText) {
 function renderGame(data) {
     const storyTextEl = document.getElementById("story-text");
     const optionsBox = document.getElementById("options-box");
-    
+
     storyTextEl.innerText = data.story;
     optionsBox.innerHTML = "";
 
