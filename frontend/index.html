@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jornada Infinita: RPG IA</title>
+    <title>QuestForge - Forje sua própria aventura</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
+            background-color: #0f0e13;
             color: #e1e1e6;
             display: flex;
             justify-content: center;
@@ -16,45 +21,222 @@
             margin: 0;
             padding: 20px;
         }
+
         .game-container {
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
-            background: #202024;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            background: #16151c;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            border: 1px solid #23222b;
         }
-        h1 { text-align: center; color: #4ade80; }
-        #story-text { font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px; }
-        .options-container { display: flex; flex-direction: column; gap: 10px; }
-        button {
-            background-color: #29292e;
-            color: #fff;
-            border: 2px solid #4ade80;
-            padding: 12px;
+
+        .subtitle {
+            text-align: center;
+            color: #a3a1b8;
             font-size: 1rem;
-            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 2rem;
+            margin: 0 0 30px;
+        }
+
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 35px;
+        }
+
+        .genre-btn {
+            background-color: #1c1a24;
+            color: #a3a1b8;
+            border: 1px solid #2c2938;
+            padding: 15px 10px;
+            font-size: 0.95rem;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .genre-btn:hover,
+        .genre-btn.selected,
+        .genre-btn:focus-visible {
+            border-color: #7c3aed;
+            color: #fff;
+            background-color: #23202e;
+        }
+
+        .genre-btn.selected {
+            box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 35px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #a3a1b8;
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            background-color: #121118;
+            border: 1px solid #2c2938;
+            padding: 15px;
+            font-size: 1rem;
+            color: #fff;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+
+        #story-text {
+            display: none;
+            font-size: 1.15rem;
+            line-height: 1.7;
+            margin: 0 0 30px;
+            color: #e1e1e6;
+            white-space: pre-wrap;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: #7c3aed;
+            color: #fff;
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            text-transform: uppercase;
+        }
+
+        .primary-btn:hover {
+            background-color: #6d28d9;
+        }
+
+        .primary-btn:active {
+            transform: scale(0.99);
+        }
+
+        .choice-btn {
+            background-color: #1c1a24;
+            color: #e1e1e6;
+            border: 1px solid #2c2938;
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
             text-align: left;
         }
-        button:hover { background-color: #4ade80; color: #121214; }
-        #start-btn { width: 100%; text-align: center; font-weight: bold; background-color: #4ade80; color: #121214; }
-        .loading { text-align: center; color: #8d8d99; font-style: italic; }
+
+        .choice-btn:hover {
+            border-color: #7c3aed;
+            background-color: #23202e;
+        }
+
+        .loading {
+            text-align: center;
+            color: #a3a1b8;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid #a78bfa;
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .genre-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .game-container {
+                padding: 28px 20px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 12px;
+            }
+
+            .genre-grid {
+                gap: 10px;
+            }
+
+            .genre-btn {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
+
 <body>
+    <main class="game-container">
+        <section id="setup-screen" aria-labelledby="page-title">
+            <div class="subtitle">Forje sua própria aventura.</div>
+            <h1 id="page-title">Que tipo de aventura você quer viver?</h1>
 
-<div class="game-container">
-    <h1>Jornada Infinita</h1>
-    <div id="game-content">
-        <p id="story-text">Bem-vindo à sua própria aventura gerada por IA. Suas escolhas definem seu destino... ou sua morte rápida.</p>
-        <div class="options-container" id="options-box">
-            <button id="start-btn" onclick="startGame()">Iniciar História</button>
-        </div>
-    </div>
-</div>
+            <div class="genre-grid" aria-label="Gêneros de aventura">
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'RPG de Ação')">⚔️ RPG de Ação</button>
+                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Aventura')">🧭
+                    Aventura</button>
+                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Terror')">👻
+                    Terror</button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Investigação')">🕵️ Investigação</button>
+                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Fantasia')">🧙
+                    Fantasia</button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Ficção Científica')">🚀 Ficção Científica</button>
+                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Romance')">💖
+                    Romance</button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Surpreenda-me')">🎲 Surpreenda-me</button>
+            </div>
 
-<script src="script.js"></script>
+            <div class="input-group">
+                <label for="char-name">Nome do personagem</label>
+                <input type="text" id="char-name" placeholder="Digite seu nome" maxlength="40" autocomplete="off">
+            </div>
+        </section>
+
+        <section id="game-content" aria-live="polite">
+            <p id="story-text"></p>
+            <div class="options-container" id="options-box">
+                <button class="primary-btn" type="button" onclick="startGame()">Criar Minha Aventura</button>
+            </div>
+        </section>
+    </main>
+    <script src="script.js"></script>
 </body>
+
 </html>
