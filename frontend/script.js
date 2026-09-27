@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://onrender.com/api/chat"; // Troque pela URL real do serviço no Render.
+const BACKEND_URL = "https://meu-rpg-ia.onrender.com/api/chat";
 const MAX_HISTORY_ENTRIES = 20;
 
 let storyHistory = [];

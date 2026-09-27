@@ -5,10 +5,13 @@ import 'dotenv/config';
 
 const app = express();
 const allowedOrigins = new Set(
-    (process.env.FRONTEND_ORIGINS ?? 'http://localhost:5500,http://127.0.0.1:5500')
-        .split(',')
-        .map(origin => origin.trim())
-        .filter(Boolean)
+    [
+        'https://meu-rpg-ktegs8evg-oiramlopes.vercel.app',
+        ...(process.env.FRONTEND_ORIGINS ?? 'http://localhost:5500,http://127.0.0.1:5500')
+            .split(',')
+            .map(origin => origin.trim())
+            .filter(Boolean)
+    ]
 );
 
 app.use(cors({
