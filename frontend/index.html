@@ -266,6 +266,14 @@
             text-align: center;
         }
 
+        .interaction-error {
+            margin: 14px 0;
+            color: #8b382d;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
         .book-footer {
             position: relative;
             margin-top: 28px;
@@ -537,7 +545,12 @@
                 <input type="text" id="char-name" maxlength="40" autocomplete="off" placeholder="Como será chamado?">
             </div>
 
-            <button class="primary-btn" type="button" onclick="startGame()">Escrever o primeiro capítulo</button>
+            <div class="page-loader" id="setup-loader" role="status" aria-live="polite">
+                <span class="page-loader-spinner" aria-hidden="true"></span>
+                <span>Escrevendo as primeiras páginas…</span>
+            </div>
+            <p class="interaction-error is-hidden" id="setup-error" role="alert"></p>
+            <button class="primary-btn" id="submit-btn" type="button" onclick="startGame()">Escrever o primeiro capítulo</button>
             <p class="footer-center-text">Cada escolha muda o rumo da história.</p>
         </section>
 
@@ -561,6 +574,7 @@
                 <span class="page-loader-spinner" aria-hidden="true"></span>
                 <span>Escrevendo os desdobramentos…</span>
             </div>
+            <p class="interaction-error is-hidden" id="game-error" role="alert"></p>
             <p id="image-status" class="footer-center-text" role="status" aria-live="polite"></p>
             <p id="story-text"></p>
             <div class="choice-list" id="options-box"></div>

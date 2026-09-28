@@ -5,6 +5,7 @@ const BACKEND_URL = isLocalPreview
 const MAX_HISTORY_ENTRIES = 20;
 const MAX_HISTORY_CHARACTERS = 12000;
 const IMAGE_GENERATION_URL = "https://image.pollinations.ai/prompt/";
+const IMAGE_LOAD_TIMEOUT_MS = 12000;
 const SURPRISE_GENRES = ["RPG de Ação", "Aventura", "Terror", "Investigação", "Fantasia", "Ficção Científica", "Romance"];
 
 let storyHistory = [];
@@ -13,6 +14,7 @@ let activeGenre = "";
 let characterName = "Aventureiro";
 let imageRequestId = 0;
 let chapterNumber = 0;
+let requestInProgress = false;
 
 const sceneArt = document.getElementById("scene-art");
 const sceneImage = document.getElementById("scene-image");
@@ -24,20 +26,60 @@ sceneImage.onerror = () => {
     imageStatus.textContent = "A gravura não ficou pronta; a história continua na página.";
 };
 
-function updateSceneIllustration(imageKeywords, story) {
+function buildSceneImageUrl(imageKeywords) {
     const prompt = [
         "A refined hand-painted gouache illustration printed inside an antique Portuguese storybook",
         `Genre: ${activeGenre}`,
         `Scene keywords: ${imageKeywords.trim().slice(0, 240)}`,
         "old paper texture, cinematic composition, detailed environment, no words, no letters, no typography"
     ].join(". ");
+    return `${IMAGE_GENERATION_URL}${encodeURIComponent(prompt)}?width=1200&height=900&nologo=true&seed=${Date.now()}`;
+}
+
+function preloadSceneImage(imageKeywords) {
+    const imageUrl = buildSceneImageUrl(imageKeywords);
+
+    return new Promise(resolve => {
+        const image = new Image();
+        let settled = false;
+        const finish = result => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            image.onload = null;
+            image.onerror = null;
+            resolve(result);
+        };
+        const timeoutId = setTimeout(() => finish(null), IMAGE_LOAD_TIMEOUT_MS);
+
+        image.onload = async () => {
+            try {
+                if (typeof image.decode === "function") await image.decode();
+                finish(imageUrl);
+            } catch {
+                finish(null);
+            }
+        };
+        image.onerror = () => finish(null);
+        image.src = imageUrl;
+    });
+}
+
+function updateSceneIllustration(imageUrl, story) {
     const requestId = ++imageRequestId;
 
     sceneArt.classList.remove("is-unavailable");
-    sceneImage.setAttribute("aria-busy", "true");
     sceneImage.alt = `Gravura da aventura de ${activeGenre}: ${story.slice(0, 120)}`;
     sceneCaption.textContent = story.slice(0, 150);
-    imageStatus.textContent = "A gravura desta página está sendo revelada…";
+    sceneImage.onload = null;
+    sceneImage.onerror = null;
+
+    if (!imageUrl) {
+        sceneImage.removeAttribute("aria-busy");
+        sceneArt.classList.add("is-unavailable");
+        imageStatus.textContent = "A gravura não ficou pronta; a história continua na página.";
+        return;
+    }
 
     sceneImage.onload = () => {
         if (requestId !== imageRequestId) return;
@@ -50,7 +92,9 @@ function updateSceneIllustration(imageKeywords, story) {
         sceneArt.classList.add("is-unavailable");
         imageStatus.textContent = "A gravura não ficou pronta; a história continua na página.";
     };
-    sceneImage.src = `${IMAGE_GENERATION_URL}${encodeURIComponent(prompt)}?width=1200&height=900&nologo=true&seed=${Date.now()}`;
+    sceneImage.setAttribute("aria-busy", "false");
+    sceneImage.src = imageUrl;
+    imageStatus.textContent = "";
 }
 
 function selectGenre(button, genre) {
@@ -78,8 +122,10 @@ function trimStoryHistory() {
     }
 }
 
-async function fetchFromBackend(prompt) {
-    showLoading();
+async function fetchFromBackend(prompt, isFirstPage = false) {
+    if (requestInProgress) return;
+    requestInProgress = true;
+    showLoading(isFirstPage);
 
     storyHistory.push({ role: "user", parts: [{ text: prompt }] });
     trimStoryHistory();
@@ -107,20 +153,24 @@ async function fetchFromBackend(prompt) {
             throw new Error("Resposta inválida do servidor");
         }
 
+        const imageUrl = await preloadSceneImage(gameData.image_keywords);
         storyHistory.push({
             role: "model",
             parts: [{ text: JSON.stringify(gameData) }]
         });
         trimStoryHistory();
 
-        renderGame(gameData);
+        renderGame(gameData, imageUrl, isFirstPage);
 
     } catch (error) {
         console.error("Erro ao conectar com o servidor:", error);
-        hideLoading();
-        const storyText = document.getElementById("story-text");
-        storyText.style.display = "block";
-        storyText.textContent = "O fluxo do livro travou. Verifique sua conexão com o servidor e tente novamente.";
+        storyHistory.pop();
+        hideLoading(isFirstPage);
+        const errorElement = document.getElementById(isFirstPage ? "setup-error" : "game-error");
+        errorElement.textContent = "O fluxo do livro travou. Verifique sua conexão com o servidor e tente novamente.";
+        errorElement.classList.remove("is-hidden");
+    } finally {
+        requestInProgress = false;
     }
 }
 
@@ -135,30 +185,29 @@ function startGame() {
         ? SURPRISE_GENRES[Math.floor(Math.random() * SURPRISE_GENRES.length)]
         : selectedGenre;
 
-    document.getElementById("setup-page").classList.add("is-hidden");
-    document.getElementById("story-page").classList.remove("is-hidden");
     document.getElementById("book-shell").dataset.genre = activeGenre;
     document.getElementById("active-genre").textContent = activeGenre;
-    document.getElementById("story-text").style.display = "block";
+    document.getElementById("setup-error").classList.add("is-hidden");
     chapterNumber = 0;
     storyHistory = [];
-    fetchFromBackend(`Inicie uma história inédita de ${activeGenre}. O protagonista é ${characterName}. Estabeleça o cenário sem sair do gênero e apresente as quatro primeiras opções.`);
+    fetchFromBackend(`Inicie uma história inédita de ${activeGenre}. O protagonista é ${characterName}. Estabeleça o cenário sem sair do gênero e apresente as quatro primeiras opções.`, true);
 }
 
 function makeChoice(choiceText) {
     fetchFromBackend(`O jogador escolheu a opção: "${choiceText}". Avance o cenário respeitando as ramificações.`);
 }
 
-function renderGame(data) {
+function renderGame(data, imageUrl, isFirstPage) {
     const storyTextEl = document.getElementById("story-text");
     const optionsBox = document.getElementById("options-box");
-    hideLoading();
+    document.getElementById("game-error").classList.add("is-hidden");
     chapterNumber += 1;
     document.getElementById("page-number").textContent = String(chapterNumber).padStart(2, "0");
     storyTextEl.style.display = "block";
     storyTextEl.textContent = data.story;
-    updateSceneIllustration(data.image_keywords, data.story);
+    updateSceneIllustration(imageUrl, data.story);
     optionsBox.replaceChildren();
+    optionsBox.style.removeProperty("display");
 
     if (data.status === "dead") {
         addPrimaryButton(optionsBox, "💀 Você Morreu! Tentar Novamente", resetGame);
@@ -174,6 +223,12 @@ function renderGame(data) {
             optionsBox.appendChild(btn);
         });
     }
+
+    if (isFirstPage) {
+        document.getElementById("setup-page").classList.add("is-hidden");
+        document.getElementById("story-page").classList.remove("is-hidden");
+    }
+    hideLoading(isFirstPage);
 }
 
 function addPrimaryButton(container, label, action) {
@@ -185,16 +240,28 @@ function addPrimaryButton(container, label, action) {
     container.appendChild(button);
 }
 
-function showLoading() {
-    const optionsBox = document.getElementById("options-box");
-    const storyText = document.getElementById("story-text");
-    optionsBox.replaceChildren();
-    storyText.style.display = "none";
-    storyText.replaceChildren();
+function showLoading(isFirstPage) {
+    if (isFirstPage) {
+        document.getElementById("submit-btn").classList.add("is-hidden");
+        document.getElementById("submit-btn").disabled = true;
+        document.getElementById("setup-loader").classList.add("is-visible");
+        return;
+    }
+
+    document.getElementById("game-error").classList.add("is-hidden");
+    document.getElementById("options-box").style.display = "none";
     document.getElementById("loader").classList.add("is-visible");
 }
 
-function hideLoading() {
+function hideLoading(isFirstPage) {
+    if (isFirstPage) {
+        document.getElementById("submit-btn").classList.remove("is-hidden");
+        document.getElementById("submit-btn").disabled = false;
+        document.getElementById("setup-loader").classList.remove("is-visible");
+        return;
+    }
+
+    document.getElementById("options-box").style.removeProperty("display");
     document.getElementById("loader").classList.remove("is-visible");
 }
 
@@ -207,7 +274,10 @@ function resetGame() {
     document.getElementById("book-shell").removeAttribute("data-genre");
     document.getElementById("setup-page").classList.remove("is-hidden");
     document.getElementById("story-page").classList.add("is-hidden");
-    hideLoading();
+    hideLoading(false);
+    hideLoading(true);
+    document.getElementById("setup-error").classList.add("is-hidden");
+    document.getElementById("game-error").classList.add("is-hidden");
     document.getElementById("story-text").style.display = "none";
     document.getElementById("story-text").textContent = "";
     document.getElementById("char-name").value = "";
