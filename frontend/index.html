@@ -4,237 +4,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuestForge - Forje sua própria aventura</title>
+    <meta name="theme-color" content="#e9e1ce">
+    <title>QuestForge - Livro de Aventuras</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            color-scheme: light;
+            --paper: #f2ebd9;
+            --paper-light: #fbf7ec;
+            --ink: #1c2b24;
+            --muted: #706b5c;
+            --border: #d1c7af;
+            --green: #375949;
+            --green-deep: #294437;
+            --rust: #b35439;
+            --accent: var(--rust);
+            --book-font: "Literata", Georgia, serif;
+            --ui-font: "DM Sans", sans-serif;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f0e13;
-            color: #e1e1e6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            min-width: 320px;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 36px 20px;
+            display: grid;
+            place-items: center;
+            color: var(--ink);
+            font-family: var(--ui-font);
+            background-color: #263c34;
+            background-image: repeating-linear-gradient(128deg, transparent 0 28px, rgba(230, 223, 190, 0.025) 29px 30px),
+                repeating-linear-gradient(38deg, transparent 0 46px, rgba(9, 29, 23, 0.08) 47px 48px);
         }
 
-        .game-container {
-            max-width: 800px;
-            width: 100%;
-            background: #16151c;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-            border: 1px solid #23222b;
+        button,
+        input {
+            font: inherit;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #a3a1b8;
-            font-size: 1rem;
-            margin-bottom: 10px;
+        button:focus-visible,
+        input:focus-visible {
+            outline: 3px solid #ad8650;
+            outline-offset: 3px;
+        }
+
+        .book-container {
+            width: min(720px, 100%);
+            padding: clamp(24px, 5vw, 48px);
+            position: relative;
+            overflow: hidden;
+            background-color: var(--paper);
+            background-image: repeating-linear-gradient(0deg, rgba(84, 60, 32, 0.022) 0 1px, transparent 1px 5px);
+            border: 1px solid #c6b797;
+            box-shadow: 0 24px 70px rgba(8, 20, 15, 0.42), inset 0 0 44px rgba(139, 105, 61, 0.1);
+        }
+
+        .book-container::before {
+            content: "";
+            position: absolute;
+            inset: 9px;
+            pointer-events: none;
+            border: 1px solid rgba(177, 153, 111, 0.28);
+        }
+
+        .book-header,
+        .book-footer,
+        .chapter-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .book-header {
+            position: relative;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            font-family: var(--book-font);
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .title-brand {
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .folio-number {
+            color: var(--rust);
+            font-size: 0.95rem;
+        }
+
+        .setup-content {
+            position: relative;
+            padding: 32px 0 18px;
+        }
+
+        .callout-text,
+        .section-label,
+        .chapter-kicker,
+        .page-loader {
+            font-family: var(--ui-font);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .callout-text {
+            margin: 0 0 12px;
+            color: var(--rust);
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            color: var(--ink);
+            font-family: var(--book-font);
+            font-weight: 500;
+            line-height: 1.2;
         }
 
         h1 {
-            text-align: center;
-            color: #fff;
-            font-size: 2rem;
-            margin: 0 0 30px;
+            max-width: 570px;
+            font-size: clamp(1.8rem, 4vw, 2.45rem);
+        }
+
+        .description {
+            max-width: 520px;
+            margin: 14px 0 28px;
+            color: var(--muted);
+            font-family: var(--book-font);
+            font-size: 0.98rem;
+            line-height: 1.65;
+        }
+
+        .section-label {
+            display: block;
+            margin-bottom: 11px;
+            color: var(--ink);
         }
 
         .genre-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 15px;
-            margin-bottom: 35px;
+            gap: 9px;
         }
 
         .genre-btn {
-            background-color: #1c1a24;
-            color: #a3a1b8;
-            border: 1px solid #2c2938;
-            padding: 15px 10px;
-            font-size: 0.95rem;
-            border-radius: 8px;
+            min-width: 0;
+            min-height: 70px;
+            padding: 9px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.24);
+            border: 1px solid var(--border);
+            border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            font-size: 0.72rem;
+            line-height: 1.25;
             text-align: center;
-            font-weight: 500;
+            transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
         }
 
-        .genre-btn:hover,
-        .genre-btn.selected,
-        .genre-btn:focus-visible {
-            border-color: #7c3aed;
-            color: #fff;
-            background-color: #23202e;
+        .genre-btn:hover {
+            border-color: var(--ink);
+            background: rgba(0, 0, 0, 0.025);
         }
 
         .genre-btn.selected {
-            box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+            border-color: var(--accent);
+            outline: 1px solid var(--accent);
+            background: #e8ddc8;
+        }
+
+        .genre-btn[aria-pressed="true"] .genre-symbol {
+            color: var(--accent);
+        }
+
+        .genre-symbol {
+            color: var(--green);
+            font-size: 1.08rem;
         }
 
         .input-group {
-            margin-bottom: 35px;
+            margin: 22px 0 18px;
         }
 
         .input-group label {
             display: block;
-            margin-bottom: 10px;
-            color: #a3a1b8;
-            font-size: 0.95rem;
+            margin-bottom: 9px;
+            color: var(--ink);
+            font-size: 0.76rem;
+            font-weight: 700;
         }
 
         .input-group input {
             width: 100%;
-            background-color: #121118;
-            border: 1px solid #2c2938;
-            padding: 15px;
-            font-size: 1rem;
-            color: #fff;
-            border-radius: 8px;
-            transition: border-color 0.2s;
+            min-height: 46px;
+            padding: 11px 13px;
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.28);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-family: var(--book-font);
+            font-size: 0.96rem;
+        }
+
+        .input-group input::placeholder {
+            color: #928a78;
+            font-style: italic;
         }
 
         .input-group input:focus {
-            outline: none;
-            border-color: #7c3aed;
-        }
-
-        #story-text {
-            display: none;
-            font-size: 1.15rem;
-            line-height: 1.7;
-            margin: 0 0 30px;
-            color: #e1e1e6;
-            white-space: pre-wrap;
-        }
-
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            border-color: var(--ink);
+            outline: 2px solid rgba(55, 89, 73, 0.16);
         }
 
         .primary-btn {
             width: 100%;
-            background-color: #7c3aed;
+            min-height: 49px;
+            padding: 13px 17px;
             color: #fff;
-            border: none;
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 8px;
+            background: var(--green);
+            border: 1px solid #2d4a3a;
+            border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
+            transition: background-color 160ms ease, transform 160ms ease;
         }
 
         .primary-btn:hover {
-            background-color: #6d28d9;
+            background: var(--green-deep);
         }
 
         .primary-btn:active {
-            transform: scale(0.99);
+            transform: translateY(1px);
+        }
+
+        .footer-center-text {
+            margin: 20px 0 0;
+            color: var(--muted);
+            font-size: 0.72rem;
+            text-align: center;
+        }
+
+        .book-footer {
+            position: relative;
+            margin-top: 28px;
+            padding-top: 13px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-family: var(--book-font);
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .is-hidden {
+            display: none !important;
+        }
+
+        .game-content {
+            position: relative;
+            padding-top: 24px;
+        }
+
+        .chapter-kicker {
+            margin: 0 0 7px;
+            color: var(--rust);
+        }
+
+        .chapter-title {
+            font-size: 1.55rem;
+        }
+
+        .narrative-frame {
+            margin: 18px 0 17px;
+            padding: 9px;
+            background: var(--paper-light);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        .scene-art {
+            position: relative;
+            aspect-ratio: 16 / 8;
+            overflow: hidden;
+            background: #ded4bd;
+        }
+
+        .story-img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scene-art.is-unavailable .story-img {
+            display: none;
+        }
+
+        .image-placeholder {
+            position: absolute;
+            inset: 0;
+            display: none;
+            place-items: center;
+            padding: 18px;
+            color: var(--muted);
+            font-family: var(--book-font);
+            font-size: 0.9rem;
+            font-style: italic;
+            text-align: center;
+            background: repeating-linear-gradient(135deg, transparent 0 12px, rgba(55, 89, 73, 0.05) 13px 14px);
+        }
+
+        .scene-art.is-unavailable .image-placeholder {
+            display: grid;
+        }
+
+        .img-caption {
+            margin: 9px 2px 0;
+            color: var(--muted);
+            font-family: var(--book-font);
+            font-size: 0.76rem;
+            font-style: italic;
+            text-align: center;
+        }
+
+        #story-text {
+            margin: 18px 0 22px;
+            color: #354139;
+            font-family: var(--book-font);
+            font-size: 0.96rem;
+            line-height: 1.72;
+            text-align: justify;
+            white-space: pre-wrap;
+        }
+
+        .choice-list {
+            display: grid;
+            gap: 9px;
+            margin-top: 18px;
         }
 
         .choice-btn {
-            background-color: #1c1a24;
-            color: #e1e1e6;
-            border: 1px solid #2c2938;
-            padding: 15px;
-            font-size: 1rem;
-            border-radius: 8px;
+            width: 100%;
+            min-height: 44px;
+            padding: 11px 13px;
+            color: var(--ink);
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            font-family: var(--book-font);
+            font-size: 0.9rem;
+            line-height: 1.4;
             text-align: left;
+            transition: border-color 160ms ease, background-color 160ms ease;
+        }
+
+        .choice-btn::before {
+            content: "✦";
+            margin-right: 10px;
+            color: var(--rust);
         }
 
         .choice-btn:hover {
-            border-color: #7c3aed;
-            background-color: #23202e;
+            border-color: var(--ink);
+            background: rgba(0, 0, 0, 0.045);
         }
 
-        .loading {
+        .page-loader {
+            display: none;
+            min-height: 150px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 0.68rem;
             text-align: center;
-            color: #a3a1b8;
-            font-style: italic;
-            font-size: 1.1rem;
         }
 
-        button:focus-visible,
-        input:focus-visible {
-            outline: 2px solid #a78bfa;
-            outline-offset: 3px;
+        .page-loader.is-visible {
+            display: flex;
         }
 
-        @media (max-width: 768px) {
-            .genre-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+        .page-loader-spinner {
+            width: 34px;
+            height: 34px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: turn-page 850ms linear infinite;
+        }
+
+        @keyframes turn-page {
+            to {
+                transform: rotate(360deg);
             }
-
-            .game-container {
-                padding: 28px 20px;
-            }
         }
 
-        @media (max-width: 360px) {
+        [data-genre="Terror"] {
+            --accent: #88464b;
+        }
+
+        [data-genre="Fantasia"] {
+            --accent: #496f56;
+        }
+
+        [data-genre="Ficção Científica"] {
+            --accent: #48727b;
+        }
+
+        [data-genre="Romance"] {
+            --accent: #a45c58;
+        }
+
+        [data-genre="Investigação"] {
+            --accent: #776749;
+        }
+
+        [data-genre="RPG de Ação"] {
+            --accent: #a94e3f;
+        }
+
+        @media (max-width: 520px) {
             body {
                 padding: 12px;
             }
 
+            .book-container {
+                padding: 26px 20px;
+            }
+
             .genre-grid {
-                gap: 10px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
             }
 
             .genre-btn {
-                font-size: 0.85rem;
+                min-height: 64px;
+                font-size: 0.7rem;
+            }
+
+            .scene-art {
+                aspect-ratio: 16 / 10;
+            }
+
+            .book-header {
+                font-size: 0.6rem;
+            }
+
+            .description {
+                font-size: 0.92rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 
 <body>
-    <main class="game-container">
-        <section id="setup-screen" aria-labelledby="page-title">
-            <div class="subtitle">Forje sua própria aventura.</div>
-            <h1 id="page-title">Que tipo de aventura você quer viver?</h1>
+    <main class="book-container" id="book-shell">
+        <header class="book-header">
+            <span class="title-brand">QuestForge</span>
+            <span>Volume I · Uma aventura sua</span>
+            <span class="folio-number" id="page-number">01</span>
+        </header>
 
-            <div class="genre-grid" aria-label="Gêneros de aventura">
+        <section class="setup-content" id="setup-page" aria-labelledby="page-title">
+            <p class="callout-text">Abra o livro. Escolha o mundo.</p>
+            <h1 id="page-title">Que história merece ser contada?</h1>
+            <p class="description">Escolha o tom da aventura e dê um nome a quem vai atravessar estas páginas.</p>
+
+            <span class="section-label" id="genre-label">Escolha um gênero</span>
+            <div class="genre-grid" role="group" aria-labelledby="genre-label">
                 <button class="genre-btn" type="button" aria-pressed="false"
-                    onclick="selectGenre(this, 'RPG de Ação')">⚔️ RPG de Ação</button>
-                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Aventura')">🧭
-                    Aventura</button>
-                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Terror')">👻
-                    Terror</button>
+                    onclick="selectGenre(this, 'RPG de Ação')"><span class="genre-symbol"
+                        aria-hidden="true">⚔</span><span>RPG de Ação</span></button>
                 <button class="genre-btn" type="button" aria-pressed="false"
-                    onclick="selectGenre(this, 'Investigação')">🕵️ Investigação</button>
-                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Fantasia')">🧙
-                    Fantasia</button>
+                    onclick="selectGenre(this, 'Aventura')"><span class="genre-symbol"
+                        aria-hidden="true">⌖</span><span>Aventura</span></button>
+                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Terror')"><span
+                        class="genre-symbol" aria-hidden="true">☾</span><span>Terror</span></button>
                 <button class="genre-btn" type="button" aria-pressed="false"
-                    onclick="selectGenre(this, 'Ficção Científica')">🚀 Ficção Científica</button>
-                <button class="genre-btn" type="button" aria-pressed="false" onclick="selectGenre(this, 'Romance')">💖
-                    Romance</button>
+                    onclick="selectGenre(this, 'Investigação')"><span class="genre-symbol"
+                        aria-hidden="true">⌕</span><span>Investigação</span></button>
                 <button class="genre-btn" type="button" aria-pressed="false"
-                    onclick="selectGenre(this, 'Surpreenda-me')">🎲 Surpreenda-me</button>
+                    onclick="selectGenre(this, 'Fantasia')"><span class="genre-symbol"
+                        aria-hidden="true">✧</span><span>Fantasia</span></button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Ficção Científica')"><span class="genre-symbol"
+                        aria-hidden="true">⌘</span><span>Ficção Científica</span></button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Romance')"><span class="genre-symbol"
+                        aria-hidden="true">♡</span><span>Romance</span></button>
+                <button class="genre-btn" type="button" aria-pressed="false"
+                    onclick="selectGenre(this, 'Surpreenda-me')"><span class="genre-symbol"
+                        aria-hidden="true">✺</span><span>Surpreenda-me</span></button>
             </div>
 
             <div class="input-group">
-                <label for="char-name">Nome do personagem</label>
-                <input type="text" id="char-name" placeholder="Digite seu nome" maxlength="40" autocomplete="off">
+                <label class="section-label" for="char-name">Nome do protagonista</label>
+                <input type="text" id="char-name" maxlength="40" autocomplete="off" placeholder="Como será chamado?">
             </div>
+
+            <button class="primary-btn" type="button" onclick="startGame()">Escrever o primeiro capítulo</button>
+            <p class="footer-center-text">Cada escolha muda o rumo da história.</p>
         </section>
 
-        <section id="game-content" aria-live="polite">
-            <p id="story-text"></p>
-            <div class="options-container" id="options-box">
-                <button class="primary-btn" type="button" onclick="startGame()">Criar Minha Aventura</button>
+        <section class="game-content is-hidden" id="story-page" aria-live="polite" aria-labelledby="story-heading">
+            <p class="chapter-kicker">Aventura de <span id="active-genre"></span></p>
+            <h2 class="chapter-title" id="story-heading">O primeiro capítulo</h2>
+
+            <figure class="narrative-frame">
+                <div class="scene-art" id="scene-art">
+                    <img class="story-img" id="scene-image"
+                        src="https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=1200&amp;height=750&amp;nologo=true"
+                        alt="Gravura de uma floresta em um livro antigo" aria-busy="false">
+                    <div class="image-placeholder" aria-hidden="true">A gravura desta página ainda está sendo desenhada.
+                    </div>
+                </div>
+                <figcaption class="img-caption" id="scene-caption">Uma página em branco, pronta para guardar um novo
+                    mundo.</figcaption>
+            </figure>
+
+            <div class="page-loader" id="loader" role="status" aria-live="polite">
+                <span class="page-loader-spinner" aria-hidden="true"></span>
+                <span>Escrevendo os desdobramentos…</span>
             </div>
+            <p id="image-status" class="footer-center-text" role="status" aria-live="polite"></p>
+            <p id="story-text"></p>
+            <div class="choice-list" id="options-box"></div>
         </section>
+
+        <footer class="book-footer">
+            <span>Crônicas do destino</span>
+            <span aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</span>
+            <span>QuestForge</span>
+        </footer>
     </main>
     <script src="script.js"></script>
 </body>
