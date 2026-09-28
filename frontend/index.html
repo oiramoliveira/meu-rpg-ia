@@ -274,6 +274,18 @@
             text-align: center;
         }
 
+        .retry-image-btn {
+            margin-left: 8px;
+            padding: 5px 8px;
+            color: var(--green-deep);
+            background: transparent;
+            border: 1px solid currentColor;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
         .book-footer {
             position: relative;
             margin-top: 28px;
@@ -304,8 +316,21 @@
             font-size: 1.55rem;
         }
 
+        .story-layout {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(150px, 0.42fr);
+            align-items: start;
+            gap: 22px;
+        }
+
+        .story-column {
+            min-width: 0;
+        }
+
         .narrative-frame {
-            margin: 18px 0 17px;
+            min-width: 0;
+            margin: 0;
             padding: 9px;
             background: var(--paper-light);
             border: 1px solid var(--border);
@@ -314,7 +339,8 @@
 
         .scene-art {
             position: relative;
-            aspect-ratio: 16 / 8;
+            aspect-ratio: 5 / 4;
+            max-height: 220px;
             overflow: hidden;
             background: #ded4bd;
         }
@@ -358,19 +384,20 @@
         }
 
         #story-text {
-            margin: 18px 0 22px;
+            margin: 0;
             color: #354139;
             font-family: var(--book-font);
-            font-size: 0.96rem;
-            line-height: 1.72;
-            text-align: justify;
+            font-size: 0.98rem;
+            line-height: 1.78;
+            text-align: left;
             white-space: pre-wrap;
         }
 
         .choice-list {
             display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 9px;
-            margin-top: 18px;
+            margin-top: 24px;
         }
 
         .choice-btn {
@@ -474,8 +501,18 @@
                 font-size: 0.7rem;
             }
 
+            .story-layout {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 18px;
+            }
+
             .scene-art {
                 aspect-ratio: 16 / 10;
+                max-height: none;
+            }
+
+            .choice-list {
+                grid-template-columns: minmax(0, 1fr);
             }
 
             .book-header {
@@ -549,8 +586,9 @@
                 <span class="page-loader-spinner" aria-hidden="true"></span>
                 <span>Escrevendo as primeiras páginas…</span>
             </div>
-            <p class="interaction-error is-hidden" id="setup-error" role="alert"></p>
-            <button class="primary-btn" id="submit-btn" type="button" onclick="startGame()">Escrever o primeiro capítulo</button>
+            <div class="interaction-error is-hidden" id="setup-error" role="alert"></div>
+            <button class="primary-btn" id="submit-btn" type="button" onclick="startGame()">Escrever o primeiro
+                capítulo</button>
             <p class="footer-center-text">Cada escolha muda o rumo da história.</p>
         </section>
 
@@ -558,25 +596,27 @@
             <p class="chapter-kicker">Aventura de <span id="active-genre"></span></p>
             <h2 class="chapter-title" id="story-heading">O primeiro capítulo</h2>
 
-            <figure class="narrative-frame">
-                <div class="scene-art" id="scene-art">
-                    <img class="story-img" id="scene-image"
-                        src="https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=1200&amp;height=750&amp;nologo=true"
-                        alt="Gravura de uma floresta em um livro antigo" aria-busy="false">
-                    <div class="image-placeholder" aria-hidden="true">A gravura desta página ainda está sendo desenhada.
-                    </div>
+            <div class="story-layout">
+                <div class="story-column">
+                    <p id="story-text"></p>
                 </div>
-                <figcaption class="img-caption" id="scene-caption">Uma página em branco, pronta para guardar um novo
-                    mundo.</figcaption>
-            </figure>
+                <figure class="narrative-frame">
+                    <div class="scene-art" id="scene-art">
+                        <img class="story-img" id="scene-image"
+                            src="https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=600&amp;height=480&amp;nologo=true"
+                            alt="Gravura de uma floresta em um livro antigo" aria-busy="false">
+                        <div class="image-placeholder" aria-hidden="true">A gravura desta página ainda está sendo desenhada.</div>
+                    </div>
+                    <figcaption class="img-caption" id="scene-caption">Uma página em branco, pronta para guardar um novo mundo.</figcaption>
+                </figure>
+            </div>
 
             <div class="page-loader" id="loader" role="status" aria-live="polite">
                 <span class="page-loader-spinner" aria-hidden="true"></span>
                 <span>Escrevendo os desdobramentos…</span>
             </div>
-            <p class="interaction-error is-hidden" id="game-error" role="alert"></p>
+            <div class="interaction-error is-hidden" id="game-error" role="alert"></div>
             <p id="image-status" class="footer-center-text" role="status" aria-live="polite"></p>
-            <p id="story-text"></p>
             <div class="choice-list" id="options-box"></div>
         </section>
 

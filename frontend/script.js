@@ -5,7 +5,8 @@ const BACKEND_URL = isLocalPreview
 const MAX_HISTORY_ENTRIES = 20;
 const MAX_HISTORY_CHARACTERS = 12000;
 const IMAGE_GENERATION_URL = "https://image.pollinations.ai/prompt/";
-const IMAGE_LOAD_TIMEOUT_MS = 12000;
+const IMAGE_LOAD_TIMEOUT_MS = 15000;
+const IMAGE_GENERATION_ATTEMPTS = 2;
 const SURPRISE_GENRES = ["RPG de Ação", "Aventura", "Terror", "Investigação", "Fantasia", "Ficção Científica", "Romance"];
 
 let storyHistory = [];
@@ -15,6 +16,7 @@ let characterName = "Aventureiro";
 let imageRequestId = 0;
 let chapterNumber = 0;
 let requestInProgress = false;
+let pendingGame = null;
 
 const sceneArt = document.getElementById("scene-art");
 const sceneImage = document.getElementById("scene-image");
@@ -36,33 +38,38 @@ function buildSceneImageUrl(imageKeywords) {
     return `${IMAGE_GENERATION_URL}${encodeURIComponent(prompt)}?width=1200&height=900&nologo=true&seed=${Date.now()}`;
 }
 
-function preloadSceneImage(imageKeywords) {
-    const imageUrl = buildSceneImageUrl(imageKeywords);
+async function preloadSceneImage(imageKeywords) {
+    for (let attempt = 0; attempt < IMAGE_GENERATION_ATTEMPTS; attempt += 1) {
+        const imageUrl = buildSceneImageUrl(imageKeywords);
+        const loadedUrl = await new Promise(resolve => {
+            const image = new Image();
+            let settled = false;
+            const finish = result => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                image.onload = null;
+                image.onerror = null;
+                resolve(result);
+            };
+            const timeoutId = setTimeout(() => finish(null), IMAGE_LOAD_TIMEOUT_MS);
 
-    return new Promise(resolve => {
-        const image = new Image();
-        let settled = false;
-        const finish = result => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeoutId);
-            image.onload = null;
-            image.onerror = null;
-            resolve(result);
-        };
-        const timeoutId = setTimeout(() => finish(null), IMAGE_LOAD_TIMEOUT_MS);
+            image.onload = async () => {
+                try {
+                    if (typeof image.decode === "function") await image.decode();
+                    finish(imageUrl);
+                } catch {
+                    finish(null);
+                }
+            };
+            image.onerror = () => finish(null);
+            image.src = imageUrl;
+        });
 
-        image.onload = async () => {
-            try {
-                if (typeof image.decode === "function") await image.decode();
-                finish(imageUrl);
-            } catch {
-                finish(null);
-            }
-        };
-        image.onerror = () => finish(null);
-        image.src = imageUrl;
-    });
+        if (loadedUrl) return loadedUrl;
+    }
+
+    return null;
 }
 
 function updateSceneIllustration(imageUrl, story) {
@@ -137,9 +144,14 @@ async function fetchFromBackend(prompt, isFirstPage = false) {
             body: JSON.stringify({ history: storyHistory, genre: activeGenre, characterName })
         });
 
-        if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
+        const responseData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const error = new Error(responseData.message || responseData.error || `Backend returned HTTP ${response.status}`);
+            error.providerStatus = responseData.providerStatus;
+            throw error;
+        }
 
-        const gameData = await response.json();
+        const gameData = responseData;
         if (
             typeof gameData.story !== "string" ||
             !["alive", "dead", "win"].includes(gameData.status) ||
@@ -153,25 +165,76 @@ async function fetchFromBackend(prompt, isFirstPage = false) {
             throw new Error("Resposta inválida do servidor");
         }
 
-        const imageUrl = await preloadSceneImage(gameData.image_keywords);
-        storyHistory.push({
-            role: "model",
-            parts: [{ text: JSON.stringify(gameData) }]
-        });
-        trimStoryHistory();
-
-        renderGame(gameData, imageUrl, isFirstPage);
+        pendingGame = { data: gameData, isFirstPage };
+        await finishPendingGame();
 
     } catch (error) {
         console.error("Erro ao conectar com o servidor:", error);
         storyHistory.pop();
         hideLoading(isFirstPage);
         const errorElement = document.getElementById(isFirstPage ? "setup-error" : "game-error");
-        errorElement.textContent = "O fluxo do livro travou. Verifique sua conexão com o servidor e tente novamente.";
-        errorElement.classList.remove("is-hidden");
+        const message = error.providerStatus === 403
+            ? error.message
+            : error.providerStatus === 429
+                ? error.message
+                : "O fluxo do livro não conseguiu buscar a história. Verifique a conexão com o Render e tente novamente.";
+        showError(errorElement, message);
     } finally {
         requestInProgress = false;
     }
+}
+
+async function finishPendingGame() {
+    if (!pendingGame) return;
+
+    const { data, isFirstPage } = pendingGame;
+    const imageUrl = await preloadSceneImage(data.image_keywords);
+    if (!imageUrl) {
+        showImageRetry(isFirstPage);
+        return;
+    }
+
+    storyHistory.push({ role: "model", parts: [{ text: JSON.stringify(data) }] });
+    trimStoryHistory();
+    pendingGame = null;
+    renderGame(data, imageUrl, isFirstPage);
+}
+
+async function retryPendingImage() {
+    if (!pendingGame || requestInProgress) return;
+    requestInProgress = true;
+    const { isFirstPage } = pendingGame;
+    document.getElementById(isFirstPage ? "setup-error" : "game-error").classList.add("is-hidden");
+    showLoading(isFirstPage);
+
+    try {
+        await finishPendingGame();
+    } finally {
+        requestInProgress = false;
+    }
+}
+
+function showImageRetry(isFirstPage) {
+    hideLoading(isFirstPage);
+    if (isFirstPage) {
+        document.getElementById("submit-btn").classList.add("is-hidden");
+        document.getElementById("submit-btn").disabled = true;
+    }
+
+    const errorElement = document.getElementById(isFirstPage ? "setup-error" : "game-error");
+    errorElement.replaceChildren(document.createTextNode("A ilustração ainda não foi gerada; a página não avançou."));
+    const retryButton = document.createElement("button");
+    retryButton.type = "button";
+    retryButton.className = "retry-image-btn";
+    retryButton.textContent = "Tentar imagem novamente";
+    retryButton.onclick = retryPendingImage;
+    errorElement.appendChild(retryButton);
+    errorElement.classList.remove("is-hidden");
+}
+
+function showError(element, message) {
+    element.replaceChildren(document.createTextNode(message));
+    element.classList.remove("is-hidden");
 }
 
 function startGame() {
@@ -271,6 +334,7 @@ function resetGame() {
     activeGenre = "";
     characterName = "Aventureiro";
     chapterNumber = 0;
+    pendingGame = null;
     document.getElementById("book-shell").removeAttribute("data-genre");
     document.getElementById("setup-page").classList.remove("is-hidden");
     document.getElementById("story-page").classList.add("is-hidden");
@@ -283,7 +347,7 @@ function resetGame() {
     document.getElementById("char-name").value = "";
     document.getElementById("active-genre").textContent = "";
     document.getElementById("page-number").textContent = "01";
-    sceneImage.src = "https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=1200&height=900&nologo=true";
+    sceneImage.src = "https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=600&height=480&nologo=true";
     sceneCaption.textContent = "Uma página em branco, pronta para guardar um novo mundo.";
     imageStatus.textContent = "";
     sceneArt.classList.remove("is-unavailable");

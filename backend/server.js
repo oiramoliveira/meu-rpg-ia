@@ -140,7 +140,12 @@ app.post('/api/chat', async (req, res) => {
 
         if (!response.ok) {
             console.error(`Gemini API retornou HTTP ${response.status}.`);
-            return res.status(502).json({ error: 'Serviço de IA indisponível.' });
+            const message = response.status === 403
+                ? 'O Gemini recusou a chave ou as permissões da API. Confira GEMINI_API_KEY no Render.'
+                : response.status === 429
+                    ? 'O limite de uso do Gemini foi atingido. Aguarde e tente novamente.'
+                    : 'O serviço Gemini está indisponível no momento.';
+            return res.status(502).json({ error: 'Serviço de IA indisponível.', message, providerStatus: response.status });
         }
 
         const data = await response.json();
