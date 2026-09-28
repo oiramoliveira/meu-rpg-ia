@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import 'dotenv/config';
 
 const app = express();
+app.set('trust proxy', 1);
 const allowedOrigins = new Set(
     [
         'https://meu-rpg-ia.vercel.app',
