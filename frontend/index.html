@@ -274,18 +274,6 @@
             text-align: center;
         }
 
-        .retry-image-btn {
-            margin-left: 8px;
-            padding: 5px 8px;
-            color: var(--green-deep);
-            background: transparent;
-            border: 1px solid currentColor;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
-
         .book-footer {
             position: relative;
             margin-top: 28px;
@@ -316,88 +304,34 @@
             font-size: 1.55rem;
         }
 
-        .story-layout {
-            margin-top: 18px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(150px, 0.42fr);
-            align-items: start;
-            gap: 22px;
-        }
-
-        .story-column {
-            min-width: 0;
-        }
-
-        .narrative-frame {
-            min-width: 0;
-            margin: 0;
-            padding: 9px;
-            background: var(--paper-light);
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-        }
-
-        .scene-art {
-            position: relative;
-            aspect-ratio: 5 / 4;
-            max-height: 220px;
-            overflow: hidden;
-            background: #ded4bd;
-        }
-
-        .story-img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .scene-art.is-unavailable .story-img {
-            display: none;
-        }
-
-        .image-placeholder {
-            position: absolute;
-            inset: 0;
-            display: none;
-            place-items: center;
-            padding: 18px;
-            color: var(--muted);
-            font-family: var(--book-font);
-            font-size: 0.9rem;
-            font-style: italic;
-            text-align: center;
-            background: repeating-linear-gradient(135deg, transparent 0 12px, rgba(55, 89, 73, 0.05) 13px 14px);
-        }
-
-        .scene-art.is-unavailable .image-placeholder {
-            display: grid;
-        }
-
-        .img-caption {
-            margin: 9px 2px 0;
-            color: var(--muted);
-            font-family: var(--book-font);
-            font-size: 0.76rem;
-            font-style: italic;
-            text-align: center;
-        }
-
         #story-text {
-            margin: 0;
+            max-width: 68ch;
+            margin: 24px auto 30px;
             color: #354139;
             font-family: var(--book-font);
-            font-size: 0.98rem;
-            line-height: 1.78;
-            text-align: left;
+            font-size: 1rem;
+            line-height: 1.85;
+            text-align: justify;
+            hyphens: auto;
             white-space: pre-wrap;
+        }
+
+        #story-text::first-letter {
+            float: left;
+            margin: 0.05em 0.12em 0 0;
+            color: var(--rust);
+            font-family: var(--book-font);
+            font-size: 3.2em;
+            line-height: 0.82;
         }
 
         .choice-list {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 9px;
-            margin-top: 24px;
+            max-width: 68ch;
+            margin: 28px auto 0;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
         }
 
         .choice-btn {
@@ -501,18 +435,9 @@
                 font-size: 0.7rem;
             }
 
-            .story-layout {
-                grid-template-columns: minmax(0, 1fr);
-                gap: 18px;
-            }
-
-            .scene-art {
-                aspect-ratio: 16 / 10;
-                max-height: none;
-            }
-
-            .choice-list {
-                grid-template-columns: minmax(0, 1fr);
+            #story-text {
+                margin-top: 20px;
+                font-size: 0.94rem;
             }
 
             .book-header {
@@ -595,30 +520,13 @@
         <section class="game-content is-hidden" id="story-page" aria-live="polite" aria-labelledby="story-heading">
             <p class="chapter-kicker">Aventura de <span id="active-genre"></span></p>
             <h2 class="chapter-title" id="story-heading">O primeiro capítulo</h2>
-
-            <div class="story-layout">
-                <div class="story-column">
-                    <p id="story-text"></p>
-                </div>
-                <figure class="narrative-frame">
-                    <div class="scene-art" id="scene-art">
-                        <img class="story-img" id="scene-image"
-                            src="https://image.pollinations.ai/prompt/an%20antique%20open%20storybook%20with%20a%20quiet%20forest%20painted%20on%20the%20page?width=600&amp;height=480&amp;nologo=true"
-                            alt="Gravura de uma floresta em um livro antigo" aria-busy="false">
-                        <div class="image-placeholder" aria-hidden="true">A gravura desta página ainda está sendo
-                            desenhada.</div>
-                    </div>
-                    <figcaption class="img-caption" id="scene-caption">Uma página em branco, pronta para guardar um novo
-                        mundo.</figcaption>
-                </figure>
-            </div>
+            <p id="story-text"></p>
 
             <div class="page-loader" id="loader" role="status" aria-live="polite">
                 <span class="page-loader-spinner" aria-hidden="true"></span>
                 <span>Escrevendo os desdobramentos…</span>
             </div>
             <div class="interaction-error is-hidden" id="game-error" role="alert"></div>
-            <p id="image-status" class="footer-center-text" role="status" aria-live="polite"></p>
             <div class="choice-list" id="options-box"></div>
         </section>
 
